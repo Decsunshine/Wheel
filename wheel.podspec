@@ -25,13 +25,13 @@ Pod::Spec.new do |s|
 
   s.license      = "All rights reserved"
   s.author       = { "hongliang lu" => "honglianglu1124@gmail.com" }
-  s.platform     = :ios, "5.0"
-  s.source       = { :git => "https://github.com/Decsunshine/Wheel.git", :tag => "1.4" }
+  s.platform     = :ios, "7.0"
+  s.source       = { :git => "https://github.com/Decsunshine/Wheel.git", :tag => "v0.1" }
   s.source_files  = "Classes", "Classes/**/*.{h,m}"
   s.public_header_files = "Classes/**/*.h"
 
-  s.frameworks = 'SystemConfiguration'
-  s.libraries = "z", "sqlite3"
+  s.dependency "AFNetworking", "~> 2.0" 
+  s.dependency 'Masonry', '~> 0.5.2'
   s.requires_arc = true
 
 end
