@@ -45,8 +45,6 @@
 - (void)updateViewConstraints
 {
     [self.wheelView mas_updateConstraints:^(MASConstraintMaker *make) {
-        make.height.equalTo(@100);
-        make.width.equalTo(self.view);
         make.left.equalTo(self.view);
         make.top.equalTo(self.view).with.offset(64);
     }];
