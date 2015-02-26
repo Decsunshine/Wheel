@@ -46,8 +46,6 @@
         [self loadImage:[NSURL URLWithString:urlString]];
     }];
     [self loadImage:firstImageUrl];
-    
-
 
     [self setupPageControl];
 }
@@ -60,13 +58,6 @@
     [self addSubview:pageControl];
     
     self.pageControl = pageControl;
-}
-
-- (void)loadImage:(NSURL *)imageUrl
-{
-    UIImageView *imageView = [[UIImageView alloc] init];
-    [imageView setImageWithURL:imageUrl];
-    [self.canvas addSubview:imageView];
 }
 
 - (void)updateConstraints
@@ -129,7 +120,6 @@
 
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView
 {
- 
     if (self.firstDraw) {
         CGFloat width = [UIScreen mainScreen].applicationFrame.size.width;
         CGFloat y = self.canvas.contentOffset.y;
@@ -137,26 +127,66 @@
         self.firstDraw = NO;
     }
     
-    if (scrollView.contentOffset.x == 0) {
-        CGFloat width = scrollView.frame.size.width;
-        CGFloat y = scrollView.contentOffset.y;
-        [scrollView setContentOffset:CGPointMake(width * self.pageNum, y) animated:NO];
-    } else if (scrollView.contentOffset.x == scrollView.frame.size.width * (self.pageNum + 1)) {
-        CGFloat width = scrollView.frame.size.width;
-        CGFloat y = scrollView.contentOffset.y;
-        [scrollView setContentOffset:CGPointMake(width, y)];
-    }
-    NSInteger offSet = 0;
+    [self changeCanvasContentOffset:scrollView];
+    [self changePageControlCurrentPage:scrollView];
+}
+
+#pragma privateFunction
+
+- (void)loadImage:(NSURL *)imageUrl
+{
+    UIImageView *imageView = [[UIImageView alloc] init];
+    [imageView setImageWithURL:imageUrl];
+    [self.canvas addSubview:imageView];
+}
+
+- (void)changeCanvasContentOffset:(UIScrollView *)scrollView
+{
+    [self scrollViewAnimation:scrollView];
+    [self boundaryConditions:scrollView];
+}
+
+- (void)scrollViewAnimation:(UIScrollView *)scrollView
+{
+    CGFloat targetOffsetX = 0.0;
+    CGFloat currentOffsetX = scrollView.contentOffset.x;
     CGFloat width = [UIScreen mainScreen].applicationFrame.size.width;
     
-    if (scrollView.contentOffset.x < [UIScreen mainScreen].applicationFrame.size.width) {
-        offSet = [UIScreen mainScreen].applicationFrame.size.width * self.pageNum;
-    } else if ([UIScreen mainScreen].applicationFrame.size.width < scrollView.contentOffset.x && scrollView.contentOffset.x < [UIScreen mainScreen].applicationFrame.size.width * (self.pageNum + 1)) {
+    if ((int)round(currentOffsetX / width * 10.0) % 10 < 5) {
+        targetOffsetX = round(currentOffsetX / width) * width;
+    } else {
+        targetOffsetX = (round(currentOffsetX / width) + 1) * width;
+    }
+
+    CGFloat y = scrollView.contentOffset.y;
+    [scrollView setContentOffset:CGPointMake(targetOffsetX, y) animated:YES];
+}
+
+- (void)boundaryConditions:(UIScrollView *)scrollView
+{
+    CGFloat y = scrollView.contentOffset.y;
+    CGFloat width = scrollView.frame.size.width;
+    
+    if (scrollView.contentOffset.x == 0) {
+        [scrollView setContentOffset:CGPointMake(width * self.pageNum, y) animated:NO];
+    } else if (scrollView.contentOffset.x == width * (self.pageNum + 1)) {
+        [scrollView setContentOffset:CGPointMake(width, y) animated:NO];
+    }
+}
+
+- (void)changePageControlCurrentPage:(UIScrollView *)scrollView
+{
+    CGFloat width = [UIScreen mainScreen].applicationFrame.size.width;
+
+    NSInteger offSet = 0;
+    if (scrollView.contentOffset.x < width) {
+        offSet = width * self.pageNum;
+    } else if (width < scrollView.contentOffset.x && scrollView.contentOffset.x < width * (self.pageNum + 1)) {
         offSet = scrollView.contentOffset.x - width;
     } else {
         offSet = scrollView.contentOffset.x - width * (self.pageNum + 1);
     }
-
+    
     self.pageControl.currentPage = (NSInteger)(offSet / scrollView.frame.size.width);
 }
 
