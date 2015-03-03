@@ -20,19 +20,38 @@ PODS:
   - AFNetworking/UIKit (2.5.1):
     - AFNetworking/NSURLConnection
     - AFNetworking/NSURLSession
+  - Expecta (0.3.2)
   - Masonry (0.5.3)
+  - OCMock (2.2.4)
   - OHHTTPStubs (3.1.10):
     - OHHTTPStubs/Core (= 3.1.10)
   - OHHTTPStubs/Core (3.1.10)
+  - Specta (0.2.1)
 
 DEPENDENCIES:
   - AFNetworking (~> 2.5.1)
+  - Expecta (~> 0.3.0)
   - Masonry (~> 0.5.3)
-  - OHHTTPStubs (~> 3.1.0)
+  - OCMock (~> 2.2.4)
+  - OHHTTPStubs (~> 3.1.1)
+  - Specta (from `https://github.com/specta/specta.git`, commit `558e19762e`)
+
+EXTERNAL SOURCES:
+  Specta:
+    :commit: 558e19762e
+    :git: https://github.com/specta/specta.git
+
+CHECKOUT OPTIONS:
+  Specta:
+    :commit: 558e19762e
+    :git: https://github.com/specta/specta.git
 
 SPEC CHECKSUMS:
   AFNetworking: 8bee59492a6ff15d69130efa4d0dc67e0094a52a
+  Expecta: ee641011fe10aa1855d487b40e4976dac50ec342
   Masonry: 35368c2ca9577ca87722c12fc52c4bad9b1c1516
+  OCMock: 6db79185520e24f9f299548f2b8b07e41d881bd5
   OHHTTPStubs: 2038e929b6abb94881000524c1cb4aba0a1bb4a2
+  Specta: 2d06220591110c6d9757d8be8ecf8e63aa40dc2a
 
 COCOAPODS: 0.35.0
