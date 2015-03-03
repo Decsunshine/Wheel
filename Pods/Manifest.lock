@@ -21,13 +21,18 @@ PODS:
     - AFNetworking/NSURLConnection
     - AFNetworking/NSURLSession
   - Masonry (0.5.3)
+  - OHHTTPStubs (3.1.10):
+    - OHHTTPStubs/Core (= 3.1.10)
+  - OHHTTPStubs/Core (3.1.10)
 
 DEPENDENCIES:
   - AFNetworking (~> 2.5.1)
   - Masonry (~> 0.5.3)
+  - OHHTTPStubs (~> 3.1.0)
 
 SPEC CHECKSUMS:
   AFNetworking: 8bee59492a6ff15d69130efa4d0dc67e0094a52a
   Masonry: 35368c2ca9577ca87722c12fc52c4bad9b1c1516
+  OHHTTPStubs: 2038e929b6abb94881000524c1cb4aba0a1bb4a2
 
 COCOAPODS: 0.35.0
