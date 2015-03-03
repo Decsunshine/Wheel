@@ -1,0 +1,1 @@
+../../../Specta/src/XCTestObserver+Specta.h
