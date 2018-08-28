@@ -14,10 +14,10 @@
 
 @interface WheelView()<UIScrollViewDelegate>
 
-@property (nonatomic, strong) UIScrollView *canvas;
 @property (nonatomic, strong) UIPageControl *pageControl;
 @property (nonatomic) NSInteger pageNum;
-@property (nonatomic) BOOL firstDraw;
+@property (nonatomic, strong) NSTimer *timer;
+@property (nonatomic, strong) NSArray *banners;
 
 @end
 
@@ -34,6 +34,16 @@
     return self;
 }
 
+- (CGFloat)width
+{
+    return self.frame.size.width;
+}
+
+- (CGFloat)height
+{
+    return self.frame.size.height;
+}
+
 - (void)launchWithImageUrlArray:(NSArray *)imageUrlArray
 {
     self.pageNum = imageUrlArray.count;
@@ -47,27 +57,59 @@
     }];
     [self loadImage:firstImageUrl];
 
-    [self setupPageControl];
-}
-
-- (void)setupPageControl
-{
     UIPageControl *pageControl = [[UIPageControl alloc] init];
     pageControl.numberOfPages = self.pageNum;
     pageControl.currentPage = 0;
     [self addSubview:pageControl];
-    
     self.pageControl = pageControl;
+}
+
+- (void)loadImage:(NSURL *)imageUrl
+{
+    UIImageView *imageView = [[UIImageView alloc] init];
+    [imageView setImageWithURL:imageUrl];
+    [self.canvas addSubview:imageView];
+}
+
+
+- (void)setUpPagingViewWithBanners
+{
+    [self.pageView removeAllSubviews];
+    if (self.banners.count == 0) {
+        return;
+    } else if (self.banners.count == 1) {
+        MTCBannerView *bannerView = [[MTCBannerView alloc] initWithFrame:CGRectMake(0, 0, self.width, self.height)];
+        [bannerView setTarget:self.target andTapAction:self.tapAction];
+        bannerView.banner = [self.banners objectAtIndex:0];
+        [self.pageView addSubview:bannerView];
+        self.pageView.contentSize = CGSizeMake(self.pageView.width, self.pageView.height);
+        self.pageView.scrollEnabled = NO;
+    } else if (self.banners.count > 1) {
+        for (int index = 0; index < self.banners.count + 2; index++) {
+            MTCBannerView *bannerView = [[MTCBannerView alloc] initWithFrame:CGRectMake(0, 0, self.width, self.height)];
+            [bannerView setTarget:self.target andTapAction:self.tapAction];
+            MTCBanner *banner;
+            if (index == 0) {
+                banner = [self.banners objectAtIndex:self.banners.count - 1];
+            } else if (index == self.banners.count + 1) {
+                banner = [self.banners objectAtIndex:0];
+            } else {
+                banner = [self.banners objectAtIndex:index - 1];
+            }
+            bannerView.banner = banner;
+            bannerView.left = bannerView.width * index;
+            [self.pageView addSubview:bannerView];
+        }
+        self.pageView.contentSize = CGSizeMake(self.width * (self.banners.count + 2), self.pageView.height);
+        self.pageView.contentOffset = CGPointMake(self.width, 0);
+        self.pageView.scrollEnabled = YES;
+    } else {
+        //donothing
+    }
 }
 
 - (void)updateConstraints
 {
-    [self mas_remakeConstraints:^(MASConstraintMaker *make) {
-        CGFloat width = [UIScreen mainScreen].applicationFrame.size.width;
-        make.width.equalTo(@(width));
-        make.height.equalTo(@100);
-    }];
-    
     [self.canvas mas_updateConstraints:^(MASConstraintMaker *make) {
         make.edges.equalTo(self);
         make.size.equalTo(self);
@@ -76,14 +118,6 @@
     __block NSInteger num = 0;
     [[self.canvas subviews] enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
         UIImageView *imageView = (UIImageView *)obj;
-        
-        if (self.pageNum + 1 == idx)
-        {
-            CGFloat width = [UIScreen mainScreen].applicationFrame.size.width;
-            CGFloat y = self.canvas.contentOffset.y;
-            [self.canvas setContentOffset:CGPointMake(width, y)];
-            self.firstDraw = YES;
-        }
         
         [imageView mas_updateConstraints:^(MASConstraintMaker *make) {
             make.top.equalTo(self.canvas).with.offset(-64);
@@ -101,83 +135,55 @@
             }
             num ++;
         }];
-        
-        
     }];
     
     [self.pageControl mas_remakeConstraints:^(MASConstraintMaker *make) {
         make.width.equalTo(self);
         make.height.equalTo(@(HEIGHT_OF_PAGE_CONTROL));
         make.top.equalTo(self.mas_bottom).with.offset(-HEIGHT_OF_PAGE_CONTROL);
-        CGFloat mainWidth = self.frame.size.width;
-        make.left.equalTo(self).with.offset(mainWidth *.5 - HEIGHT_OF_PAGE_CONTROL *.5);
+        make.left.equalTo(self);
     }];
 
     [super updateConstraints];
 }
 
-#pragma mark - UIScrollViewDelegate
 
+- (void)startTimer
+{
+    if (self.pageNum > 1 && !self.timer) {
+        self.timer = [NSTimer scheduledTimerWithTimeInterval:4 target:self selector:@selector(ticking) userInfo:nil repeats:YES];
+    }
+}
+
+- (void)stopTimer
+{
+    [self.timer invalidate];
+    self.timer = nil;
+}
+
+- (void)ticking
+{
+    if (self.canvas == nil || self.pageNum == 0) {
+        return;
+    }
+    
+    int curPage = [self currentPage];
+    NSLog(@"-----curpage---%d", curPage);
+    if (curPage == 0) {
+        [self.canvas scrollRectToVisible:CGRectMake(self.width * self.pageNum, 0, self.width, self.height) animated:YES];
+    } else if (curPage == (self.pageNum + 1)) {
+        [self.canvas scrollRectToVisible:CGRectMake(self.width, 0, self.width, self.height) animated:YES];
+    } else {
+        [self.canvas scrollRectToVisible:CGRectMake(self.width * (curPage + 1), 0, self.width, self.height) animated:YES];
+    }
+}
+
+#pragma mark - UIScrollViewDelegate
+/*
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView
 {
-    if (self.firstDraw) {
-        CGFloat width = [UIScreen mainScreen].applicationFrame.size.width;
-        CGFloat y = self.canvas.contentOffset.y;
-        [self.canvas setContentOffset:CGPointMake(width, y)];
-        self.firstDraw = NO;
-    }
-    
-    [self changeCanvasContentOffset:scrollView];
-    [self changePageControlCurrentPage:scrollView];
-}
-
-#pragma privateFunction
-
-- (void)loadImage:(NSURL *)imageUrl
-{
-    UIImageView *imageView = [[UIImageView alloc] init];
-    [imageView setImageWithURL:imageUrl];
-    [self.canvas addSubview:imageView];
-}
-
-- (void)changeCanvasContentOffset:(UIScrollView *)scrollView
-{
-    [self scrollViewAnimation:scrollView];
-    [self boundaryConditions:scrollView];
-}
-
-- (void)scrollViewAnimation:(UIScrollView *)scrollView
-{
-    CGFloat targetOffsetX = 0.0;
-    CGFloat currentOffsetX = scrollView.contentOffset.x;
     CGFloat width = [UIScreen mainScreen].applicationFrame.size.width;
     
-    if ((int)round(currentOffsetX / width * 10.0) % 10 < 5) {
-        targetOffsetX = round(currentOffsetX / width) * width;
-    } else {
-        targetOffsetX = (round(currentOffsetX / width) + 1) * width;
-    }
-
-    CGFloat y = scrollView.contentOffset.y;
-    [scrollView setContentOffset:CGPointMake(targetOffsetX, y) animated:YES];
-}
-
-- (void)boundaryConditions:(UIScrollView *)scrollView
-{
-    CGFloat y = scrollView.contentOffset.y;
-    CGFloat width = scrollView.frame.size.width;
-    
-    if (scrollView.contentOffset.x == 0) {
-        [scrollView setContentOffset:CGPointMake(width * self.pageNum, y) animated:NO];
-    } else if (scrollView.contentOffset.x == width * (self.pageNum + 1)) {
-        [scrollView setContentOffset:CGPointMake(width, y) animated:NO];
-    }
-}
-
-- (void)changePageControlCurrentPage:(UIScrollView *)scrollView
-{
-    CGFloat width = [UIScreen mainScreen].applicationFrame.size.width;
-
     NSInteger offSet = 0;
     if (scrollView.contentOffset.x < width) {
         offSet = width * self.pageNum;
@@ -188,6 +194,59 @@
     }
     
     self.pageControl.currentPage = (NSInteger)(offSet / scrollView.frame.size.width);
+}
+
+- (void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView
+{
+    CGFloat y = scrollView.contentOffset.y;
+    CGFloat width = scrollView.frame.size.width;
+    
+    if (scrollView.contentOffset.x == 0) {
+        [scrollView setContentOffset:CGPointMake(width * self.pageNum, y) animated:NO];
+    } else if (scrollView.contentOffset.x == width * (self.pageNum + 1)) {
+        [scrollView setContentOffset:CGPointMake(width, y) animated:NO];
+    }
+}
+*/
+- (int)currentPage
+{
+    return floor(self.canvas.contentOffset.x / self.canvas.frame.size.width);
+}
+
+- (void)scrollViewDidScroll:(UIScrollView *)scrollView
+{
+    self.pageControl.currentPage = floor((self.canvas.contentOffset.x - self.canvas.frame.size.width / 2) / self.canvas.frame.size.width);
+}
+
+- (void)scrollViewWillBeginDragging:(UIScrollView *)scrollView
+{
+    [self.timer invalidate];
+    self.timer = nil;
+}
+
+- (void)scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate
+{
+    [self startTimer];
+}
+
+- (void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView
+{
+    int curPage = [self currentPage];
+    
+    if (curPage == 0) {
+        [self.canvas scrollRectToVisible:CGRectMake(self.width * self.pageNum, 0, self.width, self.height) animated:NO];
+    } else if (curPage == (self.pageNum + 1)) {
+        [self.canvas scrollRectToVisible:CGRectMake(self.width, 0, self.width, self.height) animated:NO];
+    }
+}
+
+- (void)scrollViewDidEndScrollingAnimation:(UIScrollView *)scrollView
+{
+    int curPage = [self currentPage];
+    
+    if (curPage == self.pageNum + 1) {
+        [scrollView scrollRectToVisible:CGRectMake(self.width, 0, self.width, self.height) animated:NO];
+    }
 }
 
 @end

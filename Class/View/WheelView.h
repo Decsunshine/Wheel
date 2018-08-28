@@ -11,5 +11,7 @@
 @interface WheelView : UIView
 
 - (void)launchWithImageUrlArray:(NSArray *)imageUrlArray;
+- (void)startTimer;
+@property (nonatomic, strong) UIScrollView *canvas;
 
 @end
